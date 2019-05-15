@@ -1,0 +1,124 @@
+<HTML>
+  <BODY>
+    <canvas id="myCanvas" width="500" height="200" style="border:1px solid #d3d3d3;">
+      Your browser does not support the HTML5 canvas tag.</canvas>
+    <p>
+      <div>
+	<button onclick="draw()">Give me new numbers</button> 
+	Distance:
+	<input type="range" min="0" max="100" value="0" id="slider">
+	<span id="sliderAmount"></span>
+      </div>
+    </p>
+
+    <script>
+      var VALUE_MAX = 19;
+      var VALUE_MIN = 0;
+      var POPULATION = 10000;
+
+      var slider = document.getElementById("slider");
+      var currentDistance = slider.value/100.0;
+      var output = document.getElementById("sliderAmount");
+      output.innerHTML = currentDistance;
+      draw(currentDistance);
+
+      slider.oninput = function() {
+	  currentDistance = this.value/100.0;
+	  output.innerHTML = currentDistance;
+	  draw();
+      }
+
+      function Uniform(min, max) {
+	  return Math.floor(Math.random() * (max-min)) + min;
+      }
+
+      function gaussianRand() {
+	  var rand = 0;
+
+	  for (var i = 0; i < 6; i += 1) {
+	      rand += Math.random();
+	  }
+
+	  return rand / 6.0;
+      }
+
+      function Normal(start, end) {
+	  return Math.floor(start + gaussianRand() * (end - start + 1));
+      }
+
+      function clear(canvas)
+      {
+	  canvas.width = canvas.width;  // clear the whole canvas
+      }
+
+      function draw() {
+	  var dataA = [];
+	  var dataB = [];
+	  var dataC = [];
+
+	  var c = document.getElementById("myCanvas");
+	  var ctx = c.getContext("2d");
+	  clear(c);
+	  var range = VALUE_MAX - VALUE_MIN;
+	  for (var i = 0; i <= range; i ++) {
+	      dataA[i] = 0;
+	      dataB[i] = 0;
+	      dataC[i] = 0;
+	  }
+
+	  for (var i = 0; i < POPULATION; i ++) {
+              var vA = Uniform(VALUE_MIN, VALUE_MAX);
+	      // populate A
+	      dataA[vA] ++;
+	      // populate B
+              var vB = Normal(VALUE_MIN, VALUE_MAX);
+	      dataB[vB] ++;
+	      // populate C
+	      var randomD = Math.random();
+	      //var randomD = gaussianRand();
+	      if (randomD > currentDistance) {
+		  dataC[vA] ++;
+	      } else {
+		  dataC[vB] ++;
+	      }
+	  }
+	  var maxA = Math.max(...dataA);
+	  var maxB = Math.max(...dataB);
+	  var maxC = Math.max(...dataC);
+
+	  ctx.save();
+	  for (var i = 0; i < dataA.length; i ++) {
+	      ctx.beginPath();
+	      ctx.moveTo(0, 0);
+	      ctx.rect(20+i*5, 200, 5, -150*dataA[i]/(maxA));
+	      ctx.strokeStyle = 'red';
+	      ctx.stroke();
+	  }
+	  ctx.restore();
+
+	  ctx.save();
+	  for (var i = 0; i < dataB.length; i ++) {
+	      ctx.beginPath();
+	      ctx.moveTo(0, 0);
+	      ctx.rect(170+i*5, 200, 5, -150*dataB[i]/(maxB));
+	      ctx.strokeStyle = 'blue';
+	      ctx.stroke();
+	  }
+	  ctx.restore();
+
+      	  ctx.save();
+	  for (var i = 0; i < dataB.length; i ++) {
+	      ctx.beginPath();
+	      ctx.moveTo(0, 0);
+	      ctx.rect(320+i*5, 200, 5, -150*dataC[i]/(maxC));
+	      ctx.strokeStyle = 'green';
+	      ctx.stroke();
+	  }
+	  ctx.restore();
+      }
+
+
+    </script>
+
+  </BODY>
+</HTML>
