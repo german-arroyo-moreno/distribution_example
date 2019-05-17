@@ -3,6 +3,9 @@ var VALUE_MIN = 0;
 var POPULATION = 1000;
 
 var GRID2D_SIZE = 25;
+var SHOW2DOTS = [true, true, true];
+
+var DST_CONFIG = 0;
 
 var COLORS = true;
 
@@ -10,15 +13,97 @@ var canvas2;
 var ctx2;
 
 
+// Pseudorandom numbers
+var m_w = 123456789;
+var m_z = 987654321;
+var mask = 0xffffffff;
+var USE_PSEUDORANDOM = true;
+var SEED = 12345678;
+
+function usePseudorandom() {
+    USE_PSEUDORANDOM = !USE_PSEUDORANDOM;
+}
+
+function newSeed() {
+    SEED = Math.floor(Math.random() * 100000);
+    draw();
+    updateMap();
+}
+
+function enable2DA() {
+    SHOW2DOTS[0] = !SHOW2DOTS[0];
+    updateMap();
+}
+
+function enable2DB() {
+    SHOW2DOTS[1] = !SHOW2DOTS[1];
+    updateMap();
+}
+
+function enable2DC() {
+    SHOW2DOTS[2] = !SHOW2DOTS[2];
+    updateMap();
+}
+
+function dstSelect() {
+    var x = document.getElementById("dstConfig").selectedIndex;
+    var y = document.getElementById("dstConfig").options;
+    DST_CONFIG = y[x].index;
+
+    for (var i = 0; i < 16; i ++){
+	for (var j = 0; j < 16; j ++) {
+	    GRID_DATA[i][j] = false;
+	    DISTANCE_FIELD[i][j] = 99999;
+	}
+    }
+
+    for (var i = 0; i < 16; i ++){
+	switch(DST_CONFIG) {
+	case 0: GRID_DATA[0][i] = true;  break;
+	case 1: GRID_DATA[7][i] = true; break;
+	case 2: GRID_DATA[15][i] = true; break;
+	case 3: GRID_DATA[i][0] = true; break;
+	case 4: GRID_DATA[i][7] = true; break;
+	case 5: GRID_DATA[i][15] = true; break;
+	case 6: GRID_DATA[i][i] = true; break;
+	default: {
+	    GRID_DATA[i][i] = true;
+	    GRID_DATA[15-i][i] = true;
+	}
+	}
+    }
+    updateMap();
+}
+
+// Takes any integer
+function seed(i) {
+    m_w = (123456789 + i) & mask;
+    m_z = (987654321 - i) & mask;
+}
+
+// Returns number between 0 (inclusive) and 1.0 (exclusive),
+// just like Math.random().
+function random() {
+    if (USE_PSEUDORANDOM) {
+	m_z = (36969 * (m_z & 65535) + (m_z >> 16)) & mask;
+	m_w = (18000 * (m_w & 65535) + (m_w >> 16)) & mask;
+	var result = ((m_z << 16) + (m_w & 65535)) >>> 0;
+	result /= 4294967296;
+	return result;
+    } else{
+	return Math.random();
+    }
+}
+
 function Uniform(min, max) {
-    return Math.floor(Math.random() * (max-min)) + min;
+    return Math.floor(random() * (max-min)) + min;
 }
 
 function gaussianRand() {
     var rand = 0;
 
     for (var i = 0; i < 6; i += 1) {
-	rand += Math.random();
+	rand += random();
     }
 
     return rand / 6.0;
@@ -48,6 +133,7 @@ sliderPop.oninput = function() {
     POPULATION = this.value;
     outputPop.innerHTML = POPULATION;
     draw();
+    updateMap();
 }
 
 slider.oninput = function() {
@@ -69,7 +155,26 @@ for (var i = 0; i < 16; i ++){
 	DISTANCE_FIELD[i][j] = 99999;
     }
 }
-GRID_DATA[7][7] = true;
+
+dstSelect();
+
+var sliderW = document.getElementById("sliderWeight");
+var currentWeight = sliderW.value/500.0;
+if (currentWeight > 1) {
+    currentWeight = Math.pow(currentWeight, 5);
+}
+var outputW = document.getElementById("sliderWeightAmount");
+outputW.innerHTML = currentWeight;
+
+sliderW.oninput = function() {
+    currentWeight = sliderW.value/500.0;
+    outputW.innerHTML = currentWeight;
+    if (currentWeight > 1) {
+	currentWeight = Math.pow(currentWeight, 5);
+    }
+    updateMap();
+}
+
 
 updateMap();
 
@@ -122,14 +227,14 @@ function updateMap (){
     for (var i = 0; i < 16; i ++){
 	for (var j = 0; j < 16; j ++) {
 	    DISTANCE_FIELD[i][j] /= MaxDistance; // normalization
-	    if (distance < 100) {
-		ctx2.beginPath();
-		ctx2.fillStyle = 'black';
-		ctx2.strokeStyle = 'black';
+	    DISTANCE_FIELD[i][j] *= currentWeight; // ponderation
+	    ctx2.beginPath();
+	    ctx2.fillStyle = 'black';
+	    ctx2.strokeStyle = 'black';
+	    if (DISTANCE_FIELD[i][j] <= 1)
 		ctx2.fillText(DISTANCE_FIELD[i][j].toFixed(1),
 			      i * GRID2D_SIZE + GRID2D_SIZE/4, j * GRID2D_SIZE + GRID2D_SIZE/2);
-		ctx2.stroke();
-	    }
+	    ctx2.stroke();
 
 	}
     }
@@ -147,7 +252,7 @@ function updateMap (){
 
 
     var offx = 17 * GRID2D_SIZE;
-    
+
     for (var i = 0; i < POPULATION / 10; i ++) {
 	// compute probabilities:
 	var x;
@@ -155,38 +260,44 @@ function updateMap (){
 	x = Uniform(0, 15);
 	y = Uniform(0, 15);
 	dataA[x][y] = true;
-	ctx2.beginPath();
-	ctx2.fillStyle = 'red';
-	ctx2.strokeStyle = 'red';
-	ctx2.fillRect(offx + x * GRID2D_SIZE + GRID2D_SIZE/2,
-	 	      y * GRID2D_SIZE + GRID2D_SIZE/2, GRID2D_SIZE/2, GRID2D_SIZE/2);
-	ctx2.stroke();
+	if (SHOW2DOTS[0]) {
+	    ctx2.beginPath();
+	    ctx2.fillStyle = 'red';
+	    ctx2.strokeStyle = 'red';
+	    ctx2.fillRect(offx + x * GRID2D_SIZE + GRID2D_SIZE/2,
+	 		  y * GRID2D_SIZE + GRID2D_SIZE/2, GRID2D_SIZE/2, GRID2D_SIZE/2);
+	    ctx2.stroke();
+	}
 
 	x = Normal(0, 15);
 	y = Normal(0, 15);
 	dataB[x][y] = true;
-	ctx2.beginPath();
-	ctx2.fillStyle = 'blue';
-	ctx2.strokeStyle = 'blue';
-	ctx2.fillRect(offx + x * GRID2D_SIZE,
-	 	      y * GRID2D_SIZE, GRID2D_SIZE/2, GRID2D_SIZE/2);
-	ctx2.stroke();
+	if (SHOW2DOTS[1]) {
+	    ctx2.beginPath();
+	    ctx2.fillStyle = 'blue';
+	    ctx2.strokeStyle = 'blue';
+	    ctx2.fillRect(offx + x * GRID2D_SIZE,
+	 		  y * GRID2D_SIZE, GRID2D_SIZE/2, GRID2D_SIZE/2);
+	    ctx2.stroke();
+	}
     }
 
     for (var i = 0; i < 16; i ++) {
 	for (var j = 0; j < 16; j ++) {
 	    var draw;
-	    if (Math.random() > DISTANCE_FIELD[i][j])
-		draw = "B";
-	    else
+	    if (random() > DISTANCE_FIELD[i][j])
 		draw = "A";
+	    else
+		draw = "B";
 	    if ( ( (draw == "A") && (dataA[i][j]) ) || ( (draw == "B") && (dataB[i][j]) ) ) {
-		ctx2.beginPath();
-		ctx2.fillStyle = 'green';
-		ctx2.strokeStyle = 'green';
-		ctx2.fillRect(offx + i * GRID2D_SIZE + GRID2D_SIZE/4,
-	 		      j * GRID2D_SIZE + GRID2D_SIZE/4, GRID2D_SIZE/2, GRID2D_SIZE/2);
-		ctx2.stroke();
+		if (SHOW2DOTS[2]) {
+		    ctx2.beginPath();
+		    ctx2.fillStyle = 'green';
+		    ctx2.strokeStyle = 'green';
+		    ctx2.fillRect(offx + i * GRID2D_SIZE + GRID2D_SIZE/4,
+	 			  j * GRID2D_SIZE + GRID2D_SIZE/4, GRID2D_SIZE/2, GRID2D_SIZE/2);
+		    ctx2.stroke();
+		}
 	    }
 	}
     }
@@ -230,6 +341,8 @@ function drawGrid (ctx, xorg, yorg, w, h, step, color) {
 
 
 function draw() {
+    seed(SEED);
+
     // 1D Example
     var dataA = [];
     var dataB = [];
@@ -259,14 +372,13 @@ function draw() {
         var vB = Normal(VALUE_MIN, VALUE_MAX);
 	dataB[vB] ++;
 	// populate C
-	var randomD = Math.random();
+	var randomD = random();
 	//var randomD = gaussianRand();
+	ctx.beginPath();
+	ctx.rect(Uniform(0, c.width), Uniform(200,400), 2, 2);
 	if (randomD > currentDistance) {
 	    dataC[vA] ++;
 	    // 2D version
-	    ctx.beginPath();
-	    ctx.rect(Uniform(0, c.width), Uniform(200,400),
-		     2, 2);
 	    if (COLORS) {
 		ctx.strokeStyle = 'red';
 	    } else {
@@ -305,6 +417,7 @@ function draw() {
 	ctx.stroke();
     }
 
+
     for (var i = 0; i < dataB.length; i ++) {
 	ctx.beginPath();
 	ctx.rect(320+i*5, 200, 5, -150*dataC[i]/(maxC));
@@ -314,12 +427,14 @@ function draw() {
 }
 
 function draw2(){
+    seed(SEED);
+
     // 2D Example
     var c = document.getElementById("myCanvas2");
     canvas2 = c;
     var ctx = c.getContext("2d");
     ctx2 = ctx;
-    ctx2.font = "10px Arial";
+    ctx2.font = "4px Arial";
     clear(c);
 
     drawGrid(ctx, 0, 0, 16 * GRID2D_SIZE, 16 * GRID2D_SIZE, GRID2D_SIZE, 'rgb(100,100,100)');
