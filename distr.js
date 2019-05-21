@@ -12,6 +12,8 @@ var COLORS = true;
 var canvas2;
 var ctx2;
 
+var MaxDistance = 0;
+
 
 // Pseudorandom numbers
 var m_w = 123456789;
@@ -66,10 +68,12 @@ function dstSelect() {
 	case 4: GRID_DATA[i][7] = true; break;
 	case 5: GRID_DATA[i][15] = true; break;
 	case 6: GRID_DATA[i][i] = true; break;
-	default: {
+	case 7: {
 	    GRID_DATA[i][i] = true;
 	    GRID_DATA[15-i][i] = true;
-	}
+	} break;
+	case 8: for (var j = 0; j < 16; j ++) GRID_DATA[i][j] = true; break;
+	case 9: for (var j = 0; j < 16; j ++) GRID_DATA[i][j] = false; break;
 	}
     }
     updateMap();
@@ -159,18 +163,18 @@ for (var i = 0; i < 16; i ++){
 dstSelect();
 
 var sliderW = document.getElementById("sliderWeight");
-var currentWeight = sliderW.value/500.0;
+var currentWeight = 2.0 - sliderW.value/500.0; // w, if w \in [0,1]
 if (currentWeight > 1) {
-    currentWeight = Math.pow(currentWeight, 5);
+    currentWeight = Math.pow(MaxDistance / 4.0, (currentWeight - 1)); // MaxDistance^(w - 1.0),  if w \in [1,2]
 }
 var outputW = document.getElementById("sliderWeightAmount");
 outputW.innerHTML = currentWeight;
 
 sliderW.oninput = function() {
-    currentWeight = sliderW.value/500.0;
-    outputW.innerHTML = currentWeight;
+    currentWeight = 2.0 - sliderW.value/500.0;
+    outputW.innerHTML = 2.0 - currentWeight;
     if (currentWeight > 1) {
-	currentWeight = Math.pow(currentWeight, 5);
+	currentWeight = Math.pow(MaxDistance / 4.0, (currentWeight - 1));
     }
     updateMap();
 }
@@ -178,18 +182,37 @@ sliderW.oninput = function() {
 
 updateMap();
 
-
-function onClick(event) {
+function mouseToGrid(X, Y) {
     var rect = canvas2.getBoundingClientRect();
-    var mouseX = event.clientX - rect.x;
-    var mouseY = event.clientY - rect.y;
+    var mouseX = X - rect.x;
+    var mouseY = Y - rect.y;
     mouseX = Math.floor(mouseX / GRID2D_SIZE);
     mouseY = Math.floor(mouseY / GRID2D_SIZE);
-    //alert("Coords = " + mouseX + ", " + mouseY);
-    if ((mouseX <= 15) && (mouseY <= 15)) {
-	GRID_DATA[mouseX][mouseY] = !GRID_DATA[mouseX][mouseY];
+
+    return {
+        x: mouseX,
+        y: mouseY
+    };
+}
+
+function onClick(event) {
+    pos = mouseToGrid(event.clientX, event.clientY);
+    if ((pos.x <= 15) && (pos.y <= 15)) {
+	GRID_DATA[pos.x][pos.y] = !GRID_DATA[pos.x][pos.y];
 	updateMap();
     }
+}
+
+function onMove(event) {
+    pos = mouseToGrid(event.clientX, event.clientY);
+    var v = document.getElementById("gridValue");
+    var value = "";
+    if (pos.x >= 17)
+	pos.x -= 17;
+
+    if ( (pos.x < 16) && (pos.y < 16) )
+	value = parseFloat(DISTANCE_FIELD[pos.x][pos.y]);
+    v.innerHTML = "(<i>" + pos.x + "</i>, <i>" + pos.y + "</i>) =  <b>" + value + "</b>";
 }
 
 function updateMap (){
@@ -227,7 +250,7 @@ function updateMap (){
     for (var i = 0; i < 16; i ++){
 	for (var j = 0; j < 16; j ++) {
 	    DISTANCE_FIELD[i][j] /= MaxDistance; // normalization
-	    DISTANCE_FIELD[i][j] *= currentWeight; // ponderation
+	    DISTANCE_FIELD[i][j] /= currentWeight; // ponderation
 	    ctx2.beginPath();
 	    ctx2.fillStyle = 'black';
 	    ctx2.strokeStyle = 'black';

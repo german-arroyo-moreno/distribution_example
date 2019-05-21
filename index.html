@@ -25,7 +25,7 @@
     </p>
 
     <p><h1>2D Example:</h1></p>
-    <canvas id="myCanvas2" width="820" height="400" onclick="onClick(event)" style="border:0px solid #d3d3d3;">
+    <canvas id="myCanvas2" width="820" height="400" onmousemove="onMove(event)" onclick="onClick(event)" style="border:0px solid #d3d3d3;">
       Your browser does not support the HTML5 canvas tag.</canvas>
     <div>
       Weight:
@@ -35,7 +35,7 @@
       <input type="checkbox" onclick="enable2DB()" name="blueC" value="true" checked> Blue
       <input type="checkbox" onclick="enable2DC()" name="greenC" value="true" checked> Green
     </div>
-    <select id="dstConfig">
+    <select id="dstConfig" onclick="dstSelect()">
       <option>Left Vertical line</option>
       <option>Middle Vertical line</option>
       <option>Right Vertical line</option>
@@ -44,8 +44,10 @@
       <option>Botton Horizontal line</option>
       <option>Diagonal</option>
       <option>Cross</option>
+      <option>Fill</option>
+      <option>Empty</option>
     </select>
-    <button type="button" onclick="dstSelect()">Apply configuration</button>
+    Grid value: <span id="gridValue"></span>
 
     <script src="distr.js"></script>
   </BODY>
