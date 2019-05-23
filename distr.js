@@ -162,22 +162,24 @@ for (var i = 0; i < 16; i ++){
 
 dstSelect();
 
-var sliderW = document.getElementById("sliderWeight");
-var currentWeight = 2.0 - sliderW.value/500.0; // w, if w \in [0,1]
-if (currentWeight > 1) {
-    currentWeight = Math.pow(MaxDistance, (currentWeight - 1)); // MaxDistance^(w - 1.0),  if w \in [1,2]
-}
-
 var outputW = document.getElementById("sliderWeightAmount");
+var sliderW = document.getElementById("sliderWeight");
+var currentWeight = sliderW.value/500.0; // w, if w \in [0,1]
+currentWeight = currentWeight - 1;
 outputW.innerHTML = currentWeight;
+// if (currentWeight > 1) {
+//     W = Math.pow(MaxDistance*MaxDistance, (currentWeight - 1.0)); // 
+//    MaxDistance^(w - 1.0),  if w \in [1,2]
+//}
+
 
 sliderW.oninput = function() {
-    currentWeight = 2.0 - sliderW.value/500.0;
-    outputW.innerHTML = 2.0 - currentWeight;
-    if (currentWeight > 1) {
-	currentWeight = Math.pow(MaxDistance, (currentWeight - 1));
-    }
-
+    currentWeight = sliderW.value/500.0;
+    currentWeight = currentWeight - 1;
+    outputW.innerHTML = currentWeight;
+    // if (currentWeight > 1) {
+    // 	W = Math.pow(MaxDistance, (currentWeight - 1.0));
+    // }
     updateMap();
 }
 
@@ -252,7 +254,7 @@ function updateMap (){
     for (var i = 0; i < 16; i ++){
 	for (var j = 0; j < 16; j ++) {
 	    DISTANCE_FIELD[i][j] /= MaxDistance; // normalization
-	    DISTANCE_FIELD[i][j] /= currentWeight; // ponderation
+	    DISTANCE_FIELD[i][j] += currentWeight; // ponderation
 	    ctx2.beginPath();
 	    ctx2.fillStyle = 'black';
 	    ctx2.strokeStyle = 'black';

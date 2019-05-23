@@ -6,11 +6,11 @@
       Population:
       <input type="range" min="100" max="10000" value="1000" id="sliderPop">
       <span id="sliderAmountPop"></span>
-      <p><button onclick="newSeed()">Generate new seed for random numbers</button>
+      <p>
 	<input type="checkbox" onclick="usePseudorandom()" name="redC" value="true" checked> Use pseudo-random numbers <br>
  </p>
     </div>
-    <p><h1>1D Example:</h1></p>
+    <p><h1>1D Example:</h1> <button onclick="newSeed()">Generate new seed for random numbers</button> </p>
     <canvas id="myCanvas" width="500" height="400" style="border:0px solid #d3d3d3;">
       Your browser does not support the HTML5 canvas tag.</canvas>
     <p>
@@ -24,7 +24,7 @@
       </div>
     </p>
 
-    <p><h1>2D Example:</h1></p>
+    <p><h1>2D Example:</h1> <button onclick="newSeed()">Generate new seed for random numbers</button></p>
     <canvas id="myCanvas2" width="820" height="400" onmousemove="onMove(event)" onclick="onClick(event)" style="border:0px solid #d3d3d3;">
       Your browser does not support the HTML5 canvas tag.</canvas>
     <div>
