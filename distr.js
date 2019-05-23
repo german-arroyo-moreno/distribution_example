@@ -258,9 +258,8 @@ function updateMap (){
 	    ctx2.beginPath();
 	    ctx2.fillStyle = 'black';
 	    ctx2.strokeStyle = 'black';
-	    if (DISTANCE_FIELD[i][j] <= 1)
-		ctx2.fillText(DISTANCE_FIELD[i][j].toFixed(1),
-			      i * GRID2D_SIZE + GRID2D_SIZE/4, j * GRID2D_SIZE + GRID2D_SIZE/2);
+	    ctx2.fillText(DISTANCE_FIELD[i][j].toFixed(1),
+			  i * GRID2D_SIZE + GRID2D_SIZE/4, j * GRID2D_SIZE + GRID2D_SIZE/2);
 	    ctx2.stroke();
 
 	}
