@@ -14,6 +14,7 @@ var ctx2;
 
 var MaxDistance = 0;
 
+var FORCE_EDGES = false;
 
 // Pseudorandom numbers
 var m_w = 123456789;
@@ -167,10 +168,6 @@ var sliderW = document.getElementById("sliderWeight");
 var currentWeight = sliderW.value/500.0; // w, if w \in [0,1]
 currentWeight = currentWeight - 1;
 outputW.innerHTML = currentWeight;
-// if (currentWeight > 1) {
-//     W = Math.pow(MaxDistance*MaxDistance, (currentWeight - 1.0)); // 
-//    MaxDistance^(w - 1.0),  if w \in [1,2]
-//}
 
 
 sliderW.oninput = function() {
@@ -180,6 +177,21 @@ sliderW.oninput = function() {
     // if (currentWeight > 1) {
     // 	W = Math.pow(MaxDistance, (currentWeight - 1.0));
     // }
+    updateMap();
+}
+
+
+var outputB = document.getElementById("sliderBlankAmount");
+var sliderB = document.getElementById("sliderBlankDistance");
+var blankDistance = 0;
+sliderB.oninput = function() {
+    blankDistance = sliderB.value / 1000.0;
+    outputB.innerHTML = blankDistance;
+    updateMap();
+}
+
+function forceEdges() {
+    FORCE_EDGES = !FORCE_EDGES;
     updateMap();
 }
 
@@ -315,7 +327,18 @@ function updateMap (){
 		draw = "A";
 	    else
 		draw = "B";
-	    if ( ( (draw == "A") && (dataA[i][j]) ) || ( (draw == "B") && (dataB[i][j]) ) ) {
+
+	    if ((FORCE_EDGES) && (DISTANCE_FIELD[i][j] - currentWeight) <= 0) {
+		draw = "C";
+	    } else {
+		if ((FORCE_EDGES) && (DISTANCE_FIELD[i][j] - currentWeight) <= blankDistance)
+		    draw = "NONE";
+	    }
+
+	    var caseA = ( (draw == "A") && (dataA[i][j]) );
+	    var caseB = ( (draw == "B") && (dataB[i][j]) );
+	    var caseC = (draw == "C");
+	    if (caseA || caseB || caseC) {
 		if (SHOW2DOTS[2]) {
 		    ctx2.beginPath();
 		    ctx2.fillStyle = 'green';

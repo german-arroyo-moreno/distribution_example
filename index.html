@@ -48,7 +48,12 @@
       <option>Empty</option>
     </select>
     Grid value: <span id="gridValue"></span>
+    <div>
+      <input type="checkbox" onclick="forceEdges()" name="onEedges" value="false" > Force distribution A at distance 0
+      <input type="range" min="0" max="1000" value="0" id="sliderBlankDistance">
+      <span id="sliderBlankAmount"></span>
 
+    </div>
     <script src="distr.js"></script>
   </BODY>
 </HTML>
